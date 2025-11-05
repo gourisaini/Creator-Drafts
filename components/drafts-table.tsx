@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { DraftViewModal } from "./draft-view-modal.";
 
 interface Draft {
   id: string;
@@ -40,6 +41,8 @@ export function DraftsTable() {
     value: "",
   });
   const [saveError, setSaveError] = useState("");
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [selectedDraft, setSelectedDraft] = useState<Draft | null>(null);
 
   useEffect(() => {
     fetchDrafts();
@@ -119,6 +122,11 @@ export function DraftsTable() {
     }
   };
 
+  const handleView = (draft: Draft) => {
+    setSelectedDraft(draft);
+    setViewModalOpen(true);
+  };
+
   if (loading) {
     return (
       <Card>
@@ -145,127 +153,194 @@ export function DraftsTable() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Your Drafts</CardTitle>
-        <CardDescription>
-          {drafts.length} draft{drafts.length !== 1 ? "s" : ""}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {error && (
-          <Alert variant="destructive" className="mb-4">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-        {saveError && (
-          <Alert variant="destructive" className="mb-4">
-            <AlertDescription>{saveError}</AlertDescription>
-          </Alert>
-        )}
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>Your Drafts</CardTitle>
+          <CardDescription>
+            {drafts.length} draft{drafts.length !== 1 ? "s" : ""}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          {saveError && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertDescription>{saveError}</AlertDescription>
+            </Alert>
+          )}
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b">
-                <th className="text-left py-2 px-2">Title</th>
-                <th className="text-left py-2 px-2">Tags</th>
-                <th className="text-left py-2 px-2">Status</th>
-                <th className="text-left py-2 px-2">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {drafts.map((draft) => (
-                <tr key={draft.id} className="border-b hover:bg-muted/50">
-                  <td className="py-2 px-2">
-                    {editing.draftId === draft.id &&
-                    editing.field === "title" ? (
-                      <input
-                        type="text"
-                        value={editing.value}
-                        onChange={(e) =>
-                          setEditing((prev) => ({
-                            ...prev,
-                            value: e.target.value,
-                          }))
-                        }
-                        onBlur={() => handleSave(draft.id)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") handleSave(draft.id);
-                          if (e.key === "Escape")
-                            setEditing({
-                              draftId: null,
-                              field: null,
-                              value: "",
-                            });
-                        }}
-                        autoFocus
-                        className="w-full px-2 py-1 border rounded bg-background"
-                      />
-                    ) : (
-                      <button
-                        onClick={() =>
-                          handleEdit(draft.id, "title", draft.title)
-                        }
-                        className="text-left hover:text-primary cursor-pointer truncate max-w-xs"
-                      >
-                        {draft.title}
-                      </button>
-                    )}
-                  </td>
-                  <td className="py-2 px-2">
-                    <div className="flex flex-wrap gap-1">
-                      {draft.tags.slice(0, 2).map((tag) => (
-                        <Badge key={tag} variant="outline" className="text-xs">
-                          {tag}
-                        </Badge>
-                      ))}
-                      {draft.tags.length > 2 && (
-                        <Badge variant="outline" className="text-xs">
-                          +{draft.tags.length - 2}
-                        </Badge>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left py-2 px-2">Title</th>
+                  <th className="text-left py-2 px-2">Desscription</th>
+
+                  <th className="text-left py-2 px-2">Tags</th>
+                  <th className="text-left py-2 px-2">Status</th>
+                  <th className="text-left py-2 px-2">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {drafts.map((draft) => (
+                  <tr key={draft.id} className="border-b hover:bg-muted/50">
+                    <td className="py-2 px-2">
+                      {editing.draftId === draft.id &&
+                      editing.field === "title" ? (
+                        <input
+                          type="text"
+                          value={editing.value}
+                          onChange={(e) =>
+                            setEditing((prev) => ({
+                              ...prev,
+                              value: e.target.value,
+                            }))
+                          }
+                          onBlur={() => handleSave(draft.id)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") handleSave(draft.id);
+                            if (e.key === "Escape")
+                              setEditing({
+                                draftId: null,
+                                field: null,
+                                value: "",
+                              });
+                          }}
+                          autoFocus
+                          className="w-full px-2 py-1 border rounded bg-background"
+                        />
+                      ) : (
+                        <button
+                          onClick={() =>
+                            handleEdit(draft.id, "title", draft.title)
+                          }
+                          className="text-left hover:text-primary cursor-pointer truncate max-w-xs"
+                        >
+                          {draft.title}
+                        </button>
                       )}
-                    </div>
-                  </td>
-                  <td className="py-2 px-2">
-                    <Badge variant={draft.published ? "default" : "secondary"}>
-                      {draft.published ? "Published" : "Draft"}
-                    </Badge>
-                  </td>
-                  <td className="py-2 px-2">
-                    <div className="flex gap-2">
-                      {!draft.published && (
+                    </td>
+
+                    <td className="py-2 px-2">
+                      {editing.draftId === draft.id &&
+                      editing.field === "description" ? (
+                        <textarea
+                          value={editing.value}
+                          onChange={(e) =>
+                            setEditing((prev) => ({
+                              ...prev,
+                              value: e.target.value,
+                            }))
+                          }
+                          onBlur={() => handleSave(draft.id)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") handleSave(draft.id);
+                            if (e.key === "Escape")
+                              setEditing({
+                                draftId: null,
+                                field: null,
+                                value: "",
+                              });
+                          }}
+                          autoFocus
+                          className="w-full px-2 py-1 border rounded bg-background"
+                        />
+                      ) : (
+                        <button
+                          onClick={() =>
+                            handleEdit(
+                              draft.id,
+                              "description",
+                              draft.description
+                            )
+                          }
+                          className="text-left hover:text-primary cursor-pointer truncate max-w-xs"
+                        >
+                          {draft.description}
+                        </button>
+                      )}
+                    </td>
+
+                    <td className="py-2 px-2">
+                      <div className="flex flex-wrap gap-1">
+                        {draft.tags.slice(0, 2).map((tag) => (
+                          <Badge
+                            key={tag}
+                            variant="outline"
+                            className="text-xs"
+                          >
+                            {tag}
+                          </Badge>
+                        ))}
+                        {draft.tags.length > 2 && (
+                          <Badge variant="outline" className="text-xs">
+                            +{draft.tags.length - 2}
+                          </Badge>
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-2 px-2">
+                      <Badge
+                        variant={draft.published ? "default" : "secondary"}
+                      >
+                        {draft.published ? "Published" : "Draft"}
+                      </Badge>
+                    </td>
+                    <td className="py-2 px-2">
+                      <div className="flex gap-2">
                         <Button
                           size="sm"
-                          onClick={() => handlePublish(draft.id)}
-                          title="Publish this draft"
+                          variant="secondary"
+                          onClick={() => handleView(draft)}
+                          title="View this draft"
                         >
-                          Publish
+                          View
                         </Button>
-                      )}
-                      {draft.published && (
-                        <Link href={`/content/${draft.id}`} target="_blank">
-                          <Button size="sm" variant="outline">
-                            View
+
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleDelete(draft.id)}
+                          title="Delete this draft"
+                        >
+                          Delete
+                        </Button>
+
+                        {!draft.published && (
+                          <Button
+                            size="sm"
+                            onClick={() => handlePublish(draft.id)}
+                            title="Publish this draft"
+                          >
+                            Publish
                           </Button>
-                        </Link>
-                      )}
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => handleDelete(draft.id)}
-                        title="Delete this draft"
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </CardContent>
-    </Card>
+                        )}
+
+                        {draft.published && (
+                          <Link href={`/content/${draft.id}`} target="_blank">
+                            <Button size="sm" variant="default">
+                              Link
+                            </Button>
+                          </Link>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+      <DraftViewModal
+        draft={selectedDraft}
+        open={viewModalOpen}
+        onOpenChange={setViewModalOpen}
+      />
+    </>
   );
 }

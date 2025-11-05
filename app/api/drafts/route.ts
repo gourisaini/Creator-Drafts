@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
       published: false,
     })
 
-    return NextResponse.json(draft, { status: 200 })
+    return NextResponse.json(draft, { status: 201 })
   } catch (error) {
     return NextResponse.json({ error: "Failed to create draft" }, { status: 500 })
   }
